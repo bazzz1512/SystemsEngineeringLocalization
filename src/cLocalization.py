@@ -1,9 +1,9 @@
 import numpy as np
 
 class cLocalization:
-    def __init__(self, nodes):
+    def __init__(self, nodes, pos):
         self.nodes = nodes
-        self.pos = None
+        self.pos = pos
         self.distances_to_nodes = None
 
     def calculate_dis(self):
@@ -15,5 +15,6 @@ class cLocalization:
         return_string += f"Current Class has: \n"
         for idx, val in enumerate(self.nodes):
             return_string += f"Node {idx}: {val[0]}, {val[1]}\n"
+        return_string += f"Pos: {self.pos[0]}, {self.pos[1]}\n"
         return return_string
 
