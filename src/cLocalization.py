@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as np
 import math
 import random
 
@@ -17,9 +17,9 @@ class cLocalization:
             distance = math.sqrt((i[0] - self.pos[0]) ** 2 + (i[1] - self.pos[1]) ** 2)
             self.distances_to_nodes.append(distance)
 
-    def add_noise_to_dis(self, error_margin):
+    def add_noise_to_dis(self, abs_error):
         for idx, huts in enumerate(self.distances_to_nodes):
-            self.distances_to_nodes[idx] += (random.random() * 2 -1) * error_margin
+            self.distances_to_nodes[idx] += (random.random() * 2 -1) * abs_error
 
     def __str__(self):
         return_string = f""
