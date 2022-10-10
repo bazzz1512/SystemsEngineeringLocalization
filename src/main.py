@@ -7,3 +7,6 @@ instance = cLocalization(nodes_list, pos)
 instance.calculate_dis()
 
 print(instance)
+
+instance.add_noise_to_dis(2)
+print(instance)
