@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import math
 import random
 from scipy import stats as st
@@ -43,7 +43,14 @@ class cLocalization:
                         match = True
                 if not match:
                     possible_points.pop(i)
-        return st.mode(possible_points)
+        est_pos = st.mode(possible_points).mode
+        if len(est_pos) == 0:
+            if error_margin > 0.05:
+                print("Can't find an intersection, returning.")
+                return [[0, 0]]
+            print("Couldn't find an intersection, trying again with larger error margin: " + str(error_margin) + "->" + str(error_margin + 0.01))
+            est_pos = self.triangulate(n, error_margin + 0.01)
+        return est_pos
 
     @staticmethod
     def is_equal(coord1, coord2, error_mar):
@@ -82,16 +89,6 @@ class cLocalization:
             theta += step
         return coords
             
-    @staticmethod
-    def quadratic_function(a, b, c):
-        try:
-            discriminant = math.sqrt(b**2 - 4*a*c)
-            if discriminant == 0:
-                return (-b/(2*a), 0, 1)
-            else:
-                return ((-b+discriminant)/(2*a), (-b-discriminant)/(2*a), 2)
-        except ValueError:
-            print("Imaginary root, invalid node?")
     
     def add_noise_to_dis(self, abs_error):
         for idx, huts in enumerate(self.distances_to_nodes):
@@ -109,3 +106,31 @@ class cLocalization:
 
         return return_string
 
+    def plot_point(self):
+        for node in self.nodes:
+            plt.plot(node[0], node[1], color='green', marker='s')
+        plt.plot(self.pos[0], self.pos[1], 'o')
+        estim = self.triangulate(1500, 0.01)[0]
+        plt.plot(estim[0], estim[1], '^')
+        plt.title("Localization Area")
+        plt.show()
+
+    def plot_path(self, path):
+        est_path = []
+        print("Calculating positions")
+        for i, coord in enumerate(path):
+            self.pos = coord
+            self.calculate_dis()
+            self.add_noise_to_dis(0.005)
+            est_path.append(self.triangulate(1500, 0.01)[0])
+            print(str(100*(i+1)/len(path)) + "%")
+        for node in self.nodes:
+            plt.plot(node[0], node[1],  color='green', marker='s')
+        print(est_path)
+        x_est, y_est = cLocalization.split_coords(est_path)
+        x_path, y_path = cLocalization.split_coords(path)
+        plt.plot(x_path, y_path, label='Actual')
+        plt.plot(x_est, y_est, label='Predicted')
+        plt.legend()
+        plt.title("Localization Area")
+        plt.show()
