@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import random
-from scipy import stats as st
+#from scipy import stats as st
 from shapely.geometry import LineString
 
 
@@ -20,15 +20,19 @@ class cLocalization:
             distance = math.sqrt((i[0] - self.pos[0]) ** 2 + (i[1] - self.pos[1]) ** 2)
             self.distances_to_nodes.append(distance)
 
-    def triangulate(self, n):
+    def add_noise_to_dis(self, abs_error):
+        for idx, huts in enumerate(self.distances_to_nodes):
+            self.distances_to_nodes[idx] += (random.random() * 2 -1) * abs_error
+
+    def triangulate(self, n, acc=0):
         # Get the x-y pairs of circles around the nodes
         # All circles should have an x-y pair that matches up (within an error_margin)
         # This pair is where the signal is sent from
         # Use fill_circle_vals to get the x-y pairs of a circle
         possible_points = []
         for ndx in range(1, len(self.nodes)):
-            x_1, y_1 = cLocalization.fill_circle_vals(self.distances_to_nodes[ndx-1], self.nodes[ndx-1], n)
-            x_2, y_2 = cLocalization.fill_circle_vals(self.distances_to_nodes[ndx], self.nodes[ndx], n)
+            x_1, y_1 = cLocalization.fill_circle_vals(np.asarray(self.distances_to_nodes[ndx-1]) + acc, self.nodes[ndx-1], n)
+            x_2, y_2 = cLocalization.fill_circle_vals(np.asarray(self.distances_to_nodes[ndx]) + acc, self.nodes[ndx], n)
             first_line = LineString(np.column_stack((x_1, y_1)))
             second_line = LineString(np.column_stack((x_2, y_2)))
             intersection = first_line.intersection(second_line)
@@ -38,10 +42,32 @@ class cLocalization:
             elif intersection.geom_type == 'Point':
                 possible_points.append(intersection.xy)
             else:
-                print("User out of bounds, intersection type: ", str(intersection.geom_type))
-                return [0, 0]
+                if acc > 0.1:
+                    print("Failed to find user")
+                    return [0, 0]
+                print("Can't find user, retrying with lower accuracy.")
+                return self.triangulate(n, 0.01)
         #mode doesn't work on noisy tuples, need to find another way to extract which tuple is most common with a tolerance
-        return st.mode(possible_points).mode[0]
+        return cLocalization.find_mode(possible_points)
+
+    @staticmethod
+    def find_mode(points):
+        if len(points) > 1:
+            points.sort()
+            x, y = cLocalization.split_coords(points)
+            diff_x = np.absolute(np.diff(x))
+            diff_y = np.absolute(np.diff(y))
+            ndx_min = np.argmin(cLocalization.gen_magnitudes(diff_x, diff_y))
+            return points[ndx_min]
+        else:
+            return points[0]
+
+    @staticmethod
+    def gen_magnitudes(x, y):
+        results = []
+        for i in range(len(x)):
+            results.append(math.sqrt(x[i]**2 + y[i]**2))
+        return results
 
     @staticmethod
     def fill_circle_vals(distance, position, n): #Position is node position
@@ -66,9 +92,6 @@ class cLocalization:
             coords.append((x[i], y[i]))
         return coords
     
-    def add_noise_to_dis(self, abs_error):
-        for idx, huts in enumerate(self.distances_to_nodes):
-            self.distances_to_nodes[idx] += (random.random() * 2 -1) * abs_error
 
     @staticmethod
     def split_coords(coords):
@@ -111,7 +134,6 @@ class cLocalization:
             print(str(100*(i+1)/len(path)) + "%")
         for node in self.nodes:
             plt.plot(node[0], node[1],  color='green', marker='s')
-        print(est_path)
         x_est, y_est = cLocalization.split_coords(est_path)
         x_path, y_path = cLocalization.split_coords(path)
         plt.plot(x_path, y_path, label='Actual')
