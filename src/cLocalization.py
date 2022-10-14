@@ -40,7 +40,8 @@ class cLocalization:
                 x, y = LineString(np.asarray(intersection)).xy
                 possible_points += cLocalization.tuple_coord_from_list(x, y)
             elif intersection.geom_type == 'Point':
-                possible_points.append(intersection.xy)
+                x, y = intersection.xy
+                possible_points += cLocalization.tuple_coord_from_list(x, y)
             else:
                 if acc > 0.1:
                     print("Failed to find user")
@@ -53,6 +54,7 @@ class cLocalization:
     @staticmethod
     def find_mode(points):
         if len(points) > 1:
+            print(points)
             points.sort()
             x, y = cLocalization.split_coords(points)
             diff_x = np.absolute(np.diff(x))
