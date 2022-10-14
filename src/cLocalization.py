@@ -46,7 +46,7 @@ class cLocalization:
                     print("Failed to find user")
                     return [0, 0]
                 print("Can't find user, retrying with lower accuracy.")
-                return self.triangulate(n, 0.01)
+                return self.triangulate(n, acc + 0.01)
         #mode doesn't work on noisy tuples, need to find another way to extract which tuple is most common with a tolerance
         return cLocalization.find_mode(possible_points)
 
