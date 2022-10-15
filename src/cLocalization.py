@@ -47,7 +47,7 @@ class cLocalization:
                     print("Failed to find user")
                     return [0, 0]
                 print("Can't find user, retrying with lower accuracy.")
-                return self.triangulate(n, acc + 0.01)
+                return self.triangulate(n, acc + 0.003)
         #mode doesn't work on noisy tuples, need to find another way to extract which tuple is most common with a tolerance
         return cLocalization.find_mode(possible_points)
 
@@ -120,9 +120,12 @@ class cLocalization:
         for node in self.nodes:
             plt.plot(node[0], node[1], color='green', marker='s')
         plt.plot(self.pos[0], self.pos[1], 'o')
+        self.calculate_dis()
+        self.add_noise_to_dis(0.03)
         estim = self.triangulate(100)
         plt.plot(estim[0], estim[1], '^')
         plt.title("Localization Area")
+        plt.savefig("Point.pdf")
         plt.show()
 
     def plot_path(self, path):
@@ -131,7 +134,7 @@ class cLocalization:
         for i, coord in enumerate(path):
             self.pos = coord
             self.calculate_dis()
-            self.add_noise_to_dis(0.005)
+            self.add_noise_to_dis(0.03)
             est_path.append(self.triangulate(50))
             print(str(100*(i+1)/len(path)) + "%")
         for node in self.nodes:
@@ -142,4 +145,5 @@ class cLocalization:
         plt.plot(x_est, y_est, label='Predicted')
         plt.legend()
         plt.title("Localization Area")
+        plt.savefig("Path.pdf")
         plt.show()
