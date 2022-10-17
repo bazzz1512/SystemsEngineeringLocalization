@@ -42,4 +42,6 @@ def get_spiral():
     for i in range(len(t)):
         points.append([x[i], y[i]])
     return points
+
+
 test_point()
