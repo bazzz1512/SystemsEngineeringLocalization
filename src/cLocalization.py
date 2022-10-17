@@ -54,7 +54,6 @@ class cLocalization:
     @staticmethod
     def find_mode(points):
         if len(points) > 1:
-            print(points)
             points.sort()
             x, y = cLocalization.split_coords(points)
             diff_x = np.absolute(np.diff(x))
@@ -134,7 +133,7 @@ class cLocalization:
         for i, coord in enumerate(path):
             self.pos = coord
             self.calculate_dis()
-            self.add_noise_to_dis(0.03)
+            self.add_noise_to_dis(0.05)
             est_path.append(self.triangulate(50))
             print(str(100*(i+1)/len(path)) + "%")
         for node in self.nodes:
