@@ -32,16 +32,15 @@ def test_path():
     instance.plot_path(path)
     
 
+# This can be made into a numpy array
 def get_spiral():
     t = np.linspace(2, 18, 80)
     sins = np.sin(t)
     coss = np.cos(t)
     y = np.divide(sins, t) * 8
     x = np.divide(coss, t) * 8
-    points = []
-    for i in range(len(t)):
-        points.append([x[i], y[i]])
-    return points
+    new_points = np.vstack((x,y)).transpose()
+    return new_points
 
 
-test_point()
+test_path()
