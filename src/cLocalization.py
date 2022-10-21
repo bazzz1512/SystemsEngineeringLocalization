@@ -56,14 +56,14 @@ class cLocalization:
 
     def triangulate_least_squares(self, room_points=None):
         return_val = None
-        if room_points.any() != None:
+        if room_points != None:
             mid_room = np.average(room_points, axis=1)
             print(f"Mid of room is: {mid_room}")
             return_val = scipy.optimize.least_squares(self.get_error, x0=mid_room, args=(self.nodes, self.distances_to_nodes))
         else:
             return_val = scipy.optimize.least_squares(self.get_error, x0 = np.array([0,0]),
                                                       args=(self.nodes, self.distances_to_nodes))
-        return return_val
+        return return_val.x
 
     @staticmethod
     def get_error(pos: np.ndarray, nodes: np.ndarray, distances: np.ndarray):
@@ -159,7 +159,7 @@ class cLocalization:
             self.pos = coord
             self.calculate_dis()
             self.add_noise_to_dis(0.05)
-            est_path.append(self.triangulate(50))
+            est_path.append(self.triangulate_least_squares(None))
             print(str(100 * (i + 1) / len(path)) + "%")
         for node in self.nodes:
             plt.plot(node[0], node[1], color='green', marker='s')
