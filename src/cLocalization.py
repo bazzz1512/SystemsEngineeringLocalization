@@ -62,7 +62,7 @@ class cLocalization:
         else:
             return_val = scipy.optimize.least_squares(self.get_error, x0 = np.array([0,0]),
                                                       args=(self.nodes, self.distances_to_nodes))
-        return return_val
+        return return_val.x
 
     @staticmethod
     def get_error(pos: np.ndarray, nodes: np.ndarray, distances: np.ndarray):
@@ -113,6 +113,7 @@ class cLocalization:
         for i in range(len(x)):
             coords.append((x[i], y[i]))
         return coords
+    
 
     @staticmethod
     def split_coords(coords):
@@ -157,7 +158,7 @@ class cLocalization:
             self.pos = coord
             self.calculate_dis()
             self.add_noise_to_dis(0.05)
-            est_path.append(self.triangulate(50))
+            est_path.append(self.triangulate_least_squares(None))
             print(str(100 * (i + 1) / len(path)) + "%")
         for node in self.nodes:
             plt.plot(node[0], node[1], color='green', marker='s')
