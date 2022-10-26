@@ -56,9 +56,8 @@ class cLocalization:
 
     def triangulate_least_squares(self, room_points=None):
         return_val = None
-        if room_points != None:
+        if room_points.any() != None:
             mid_room = np.average(room_points, axis=1)
-            print(f"Mid of room is: {mid_room}")
             return_val = scipy.optimize.least_squares(self.get_error, x0=mid_room, args=(self.nodes, self.distances_to_nodes))
         else:
             return_val = scipy.optimize.least_squares(self.get_error, x0 = np.array([0,0]),
