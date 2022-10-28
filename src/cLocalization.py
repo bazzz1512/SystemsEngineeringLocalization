@@ -13,23 +13,14 @@ class cLocalization:
     def __init__(self, nodes, pos):
         self.nodes = nodes
         self.pos = pos
-        self.distances_to_nodes = []
+        self.distances_to_nodes = np.array([])
 
     # TODO: Calculate position from different points and create localization from that
     def calculate_dis(self):
-        self.distances_to_nodes = []
-        for i in self.nodes:
-            # distance = math.sqrt((i[0] - self.pos[0]) ** 2 + (i[1] - self.pos[1]) ** 2)
-            distance = np.lingalg.norm(i-self.pos)
-            self.distances_to_nodes.append(distance)
+        self.distances_to_nodes = np.linalg.norm(self.nodes-self.pos, axis=1)
 
-    def add_noise_to_dis(self, abs_error):
-        for idx, huts in enumerate(self.distances_to_nodes):
-            self.distances_to_nodes[idx] += (random.random() * 2 - 1) * abs_error
-
-    # Interesting method to look at is the scipy least squares: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html
-    # This function will just look for the correct return value
-
+    def add_noise_to_dis(self, rel_error):
+        self.distances_to_nodes = np.multiply(self.distances_to_nodes, (np.random.random_sample(self.distances_to_nodes.size) * 2 * rel_error + (1-rel_error)))
 
     def triangulate(self, n, acc=0):
         # Get the x-y pairs of circles around the nodes
@@ -72,11 +63,8 @@ class cLocalization:
 
     @staticmethod
     def get_error(pos: np.ndarray, nodes: np.ndarray, distances: np.ndarray):
-        total_error = 0
-        for i, x in enumerate(distances):
-            total_error += np.abs(distances[i] - np.sqrt((nodes[i][0] - pos[0]) ** 2 + (nodes[i][1] - pos[1]) ** 2))
+        return np.sum(np.abs(distances-np.linalg.norm(nodes-pos, axis=1)))
 
-        return total_error
 
     @staticmethod
     def find_mode(points):

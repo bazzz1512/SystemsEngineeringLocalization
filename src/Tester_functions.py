@@ -70,7 +70,7 @@ def test_new_triangulation():
 
 def test_different_values_save():
     new_array = np.zeros((100, 100, 2))
-    nodes_list = np.array([[0, 0], [10, 0], [10, 10], [0, 10], [5,5]])
+    nodes_list = np.array([[0, 0], [10, 0], [10, 10], [0, 10], [5,0], [5,10], [0,5], [10,5], [5,5], [2,2], [7,7], [2,7], [7,2], [1,1], [9,9], [2,3], [8,3], [3,8], [8,8], [7,1], [1,7]])
     room = np.array([[0,0], [10,10]])
     error = 0.05
     for i in range(100):
@@ -78,7 +78,7 @@ def test_different_values_save():
             pos = np.array([i*0.1, j*0.1])
             instance = cLocalization(nodes_list, pos)
             instance.calculate_dis()
-            instance.add_noise_to_dis(0.5)
+            instance.add_noise_to_dis(0.05)
             return_val = instance.triangulate_least_squares(room_points=room)
             new_return = return_val
             # print(new_return)
@@ -86,6 +86,6 @@ def test_different_values_save():
             # new_error = np.sqrt((pos[0]-new_return[0])**2 + (pos[1] - new_return[1])**2)
             new_array[i,j] = new_return
 
-    np.save("data_points.npy", new_array)
+    np.save("data_points_many_more.npy", new_array)
 
 
