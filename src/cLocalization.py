@@ -5,6 +5,8 @@ import random
 import scipy
 # from scipy import stats as st
 from shapely.geometry import LineString
+import scipy
+
 
 
 class cLocalization:
@@ -15,15 +17,19 @@ class cLocalization:
 
     # TODO: Calculate position from different points and create localization from that
     def calculate_dis(self):
-
         self.distances_to_nodes = []
         for i in self.nodes:
-            distance = math.sqrt((i[0] - self.pos[0]) ** 2 + (i[1] - self.pos[1]) ** 2)
+            # distance = math.sqrt((i[0] - self.pos[0]) ** 2 + (i[1] - self.pos[1]) ** 2)
+            distance = np.lingalg.norm(i-self.pos)
             self.distances_to_nodes.append(distance)
 
     def add_noise_to_dis(self, abs_error):
         for idx, huts in enumerate(self.distances_to_nodes):
             self.distances_to_nodes[idx] += (random.random() * 2 - 1) * abs_error
+
+    # Interesting method to look at is the scipy least squares: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html
+    # This function will just look for the correct return value
+
 
     def triangulate(self, n, acc=0):
         # Get the x-y pairs of circles around the nodes
@@ -58,7 +64,7 @@ class cLocalization:
         return_val = None
         if room_points.any() != None:
             mid_room = np.average(room_points, axis=1)
-            return_val = scipy.optimize.least_squares(self.get_error, x0=mid_room, args=(self.nodes, self.distances_to_nodes))
+            return_val = scipy.optimize.least_squares(self.get_error, x0=mid_room, bounds=([0,0],[10,10]), args=(self.nodes, self.distances_to_nodes))
         else:
             return_val = scipy.optimize.least_squares(self.get_error, x0 = np.array([0,0]),
                                                       args=(self.nodes, self.distances_to_nodes))
@@ -124,17 +130,62 @@ class cLocalization:
             y.append(coord[1])
         return x, y
 
+    def trilaterate(self, points, distances):
+        # ported from https://github.com/gheja/trilateration.js
+        # points -> list of np arrays in the form of [[x, y, z], [x, y, z]
+        # distances -> np array [r1, r2, r3]
+        p1 = points[:,0]
+        p2 = points[:,1]
+        p3 = points[:,2]
+        r1, r2, r3 = distances
+
+        def norm(v):
+            return np.sqrt(np.sum(v ** 2))
+
+        def dot(v1, v2):
+            return np.dot(v1, v2)
+
+        def cross(v1, v2):
+            return np.cross(v1, v2)
+
+        ex = (p2 - p1) / norm(p2 - p1)
+        i = dot(ex, p3 - p1)
+        a = (p3 - p1) - ex * i
+        ey = a / norm(a)
+        ez = cross(ex, ey)
+        d = norm(p2 - p1)
+        j = dot(ey, p3 - p1)
+        x = (r1 ** 2 - r2 ** 2 + d ** 2) / (2 * d)
+        y = (r1 ** 2 - r3 ** 2 + i ** 2 + j ** 2) / (2 * j) - (i / j) * x
+        b = r1 ** 2 - x ** 2 - y ** 2
+
+        # floating point math flaw in IEEE 754 standard
+        # see https://github.com/gheja/trilateration.js/issues/2
+        if (np.abs(b) < 0.0000000001):
+            b = 0
+
+        z = np.sqrt(b)
+        if np.isnan(z):
+            raise Exception('NaN met, cannot solve for z')
+
+        a = p1 + ex * x + ey * y
+        p4a = a + ez * z
+        p4b = a - ez * z
+
+        return p4a, p4b
+
     def __str__(self):
         return_string = f""
         return_string += f"Current Class has: \n"
         for idx, val in enumerate(self.nodes):
-            return_string += f"Node {idx}: {val[0]}, {val[1]}\n"
-        return_string += f"Pos: {self.pos[0]}, {self.pos[1]}\n"
+            return_string += f"Node {idx}: {val}\n"
+        return_string += f"Pos: {self.pos}\n"
         return_string += f"Current distances: \n"
         for i in self.distances_to_nodes:
             return_string += f"    {i}\n"
 
         return return_string
+
 
     def plot_point(self):
         for node in self.nodes:
@@ -172,27 +223,3 @@ class cLocalization:
         plt.show()
 
 
-if __name__ == "__main__":
-    pos = np.array([1, 1])
-    nodes_list = np.array([[1, 1], [0, 0], [1, 3], [5, 2], [-1, 6], [6, 6], [6, -6]])
-    min_room = np.min(nodes_list, axis=0)
-    max_room = np.max(nodes_list, axis=0)
-    min_max = np.vstack([min_room, max_room])
-
-    print(min_room)
-    print(max_room)
-    print(min_max)
-
-    instance = cLocalization(nodes_list, pos)
-    instance.calculate_dis()
-    print(instance)
-    print(f"Error: {instance.get_error(pos, nodes_list, np.array(instance.distances_to_nodes))}")
-    instance.add_noise_to_dis(2)
-    print(instance)
-    print(f"Error: {instance.get_error(pos, nodes_list, np.array(instance.distances_to_nodes))}")
-
-    return_val = instance.triangulate_least_squares(min_max)
-    print(return_val)
-
-    triangulate = instance.triangulate(300)
-    print(triangulate)

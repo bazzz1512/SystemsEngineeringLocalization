@@ -68,8 +68,8 @@ def test_new_triangulation():
     return_val = instance.triangulate_least_squares(min_max)
     print(return_val)
 
-def test_different_values():
-    new_array = np.zeros((100, 100, 1))
+def test_different_values_save():
+    new_array = np.zeros((100, 100, 2))
     nodes_list = np.array([[0, 0], [10, 0], [10, 10], [0, 10], [5,5]])
     room = np.array([[0,0], [10,10]])
     error = 0.05
@@ -80,14 +80,12 @@ def test_different_values():
             instance.calculate_dis()
             instance.add_noise_to_dis(0.5)
             return_val = instance.triangulate_least_squares(room_points=room)
-            new_return = return_val.x
-            print(new_return)
-            new_error = np.sqrt((pos[0]-new_return[0])**2 + (pos[1] - new_return[1])**2)
-            new_array[i,j] = new_error
-    max_val = np.max(new_array)
-    print(max_val)
-    print(np.min(new_array))
-    print(np.average(new_array))
-    print(np.where(new_array == max_val))
+            new_return = return_val
+            # print(new_return)
+            print(f"{i}, {j}")
+            # new_error = np.sqrt((pos[0]-new_return[0])**2 + (pos[1] - new_return[1])**2)
+            new_array[i,j] = new_return
+
+    np.save("data_points.npy", new_array)
 
 
